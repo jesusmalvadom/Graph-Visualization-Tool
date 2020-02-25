@@ -9,22 +9,24 @@ class Edge {
     };
   }
   
-  render() {
-    this.render_line();
+  render(node1posX=this.node1.pos.x, node1posY=this.node1.pos.y, node2posX=this.node2.pos.x, node2posY=this.node2.pos.y, info=false) {
+    this.render_line(node1posX, node1posY, node2posX, node2posY, info);
   }
   
-  render_line() {
+  render_line(node1posX, node1posY, node2posX, node2posY, info) {
     stroke(0);
     strokeWeight(2);
-    if (this.flags.hover) {
-      stroke(200, 0, 0);
-      strokeWeight(3);
-    }
-    if (this.flags.dragging) {
-      fill(100, 255, 255);
+    if (!info) {
+      if (this.flags.hover) {
+        stroke(200, 0, 0);
+        strokeWeight(3);
+      }
+      if (this.flags.dragging) {
+        fill(100, 255, 255);
+      }
     }
     
-    line(this.node1.pos.x, this.node1.pos.y, this.node2.pos.x, this.node2.pos.y);
+    line(node1posX, node1posY, node2posX, node2posY);
   }
   
   isInside(x, y) {

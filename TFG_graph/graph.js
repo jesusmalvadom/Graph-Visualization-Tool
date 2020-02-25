@@ -3,6 +3,10 @@ const C0 = 150000 // Repulsion
 const C1 = 0.1 // Attraction
 const SPRING_LENGHT = 180
 
+let hovered_node = undefined;
+let hovered_edge = undefined; 
+let hovered_node_flag = false;
+let hovered_edge_flag = false;
 
 class Graph {
   constructor() {
@@ -57,6 +61,8 @@ class Graph {
   
   addEdge(idNode1, idNode2) {
 
+    if (idNode1 == idNode2) return;
+
     var node1 = this.findNode(idNode1);
     var node2 = this.findNode(idNode2);
     var node1Index = this.findNodeIndex(idNode1);
@@ -105,20 +111,31 @@ class Graph {
     return this.nodeList.find(item => item.id == node.id).id;
   }
 
-
   show() {
     // Draw the edges
+    hovered_edge_flag = false;
     for (let edge of graph.edgeList) {
-      if (edge.isInside(mouseX, mouseY)) edge.flags.hover = true;
-      else edge.flags.hover = false;
+      if (edge.isInside(mouseX, mouseY)) {
+        edge.flags.hover = true;
+        hovered_edge = edge;
+        hovered_edge_flag = true;
+      } else {
+        edge.flags.hover = false;
+      }
       
       edge.render();
     }
 
     // Draw the nodes
+    hovered_node_flag = false;
     for (let node of graph.nodeList) {
-      if (node.isInside(mouseX, mouseY)) node.flags.hover = true;
-      else node.flags.hover = false;
+      if (node.isInside(mouseX, mouseY)) {
+        node.flags.hover = true;
+        hovered_node = node;
+        hovered_node_flag = true;
+      } else { 
+        node.flags.hover = false;
+      }
       
       node.render();
     }
