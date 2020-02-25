@@ -1,16 +1,30 @@
-const NUM_NODES = 40;
-const MAX_NODE_DEG = 7;
+const NUM_NODES = 10;
+const MAX_NODE_DEG = 2;
+
 const LENGTH_CANVAS = 1500;
 const WIDTH_CANVAS = 1500;
-const LENGTH_BUTTON = 150
-const WIDTH_BUTTON = 50
-const TIME_BUFFERING = NUM_NODES*10
+
+const LENGTH_CONTROL = 600;
+const MARGIN_CONTROL = 50;
+
+const LENGTH_BUTTON = 150;
+const WIDTH_BUTTON = 50;
+
+const TIME_BUFFERING = NUM_NODES*5;
+
+const COLOR_BACKGROUND = 100;
 
 let graph;
 let opt_flags;
+let controlBuffer;
+let infoBuffer;
 
 function setup() {
-  createCanvas(LENGTH_CANVAS, WIDTH_CANVAS);
+  createCanvas(LENGTH_CANVAS + LENGTH_CONTROL, WIDTH_CANVAS);
+
+  controlBuffer = createGraphics(LENGTH_CONTROL, WIDTH_CANVAS);
+  infoBuffer = createGraphics(LENGTH_CONTROL - (2 * MARGIN_CONTROL), LENGTH_CONTROL - (2 * MARGIN_CONTROL));
+  
 
   opt_flags = {
     add_node : false,
@@ -101,10 +115,55 @@ function draw() {
     return;
   }
 
-  background(100);
+  background(COLOR_BACKGROUND);
+  drawControlBuffer();
   graph.show();
   graph.autoCorrectPos();
-  buttons_show()
+  buttons_show();
+
+
+
+  // TODO Little trick to make the line not disappear, might fix it later 
+  if (pinned_node) {
+    stroke(74, 244, 255);
+    strokeWeight(3);
+    line(pinned_node.pos.x, pinned_node.pos.y, mouseX, mouseY);
+  }
+
+
+}
+
+// Control panel situated at the right side
+function drawControlBuffer() {
+  image(controlBuffer, LENGTH_CANVAS, 0);
+  controlBuffer.background(150, 0, 0);
+
+  // We draw the information window
+  drawInfoBuffer();
+}
+
+// Information panel situated in the control buffer
+function drawInfoBuffer() {
+  image(infoBuffer, LENGTH_CANVAS + MARGIN_CONTROL, WIDTH_CANVAS - LENGTH_CONTROL - MARGIN_CONTROL);
+  infoBuffer.background(COLOR_BACKGROUND);
+
+  // Draw the nodes
+  if (hovered_node_flag == true){
+    var posX = LENGTH_CANVAS + MARGIN_CONTROL + (LENGTH_CONTROL - (2 * MARGIN_CONTROL))/2;
+    var posY = WIDTH_CANVAS - LENGTH_CONTROL - MARGIN_CONTROL + (LENGTH_CONTROL - (2 * MARGIN_CONTROL))/2;
+    hovered_node.render(posX, posY, 50, true);
+    return;
+  }
+
+  if (hovered_edge_flag == true){
+    var posX = LENGTH_CANVAS + MARGIN_CONTROL + (LENGTH_CONTROL - (2 * MARGIN_CONTROL))/2;
+    var posY = WIDTH_CANVAS - LENGTH_CONTROL - MARGIN_CONTROL + (LENGTH_CONTROL - (2 * MARGIN_CONTROL))/2;
+    hovered_edge.render(posX-150+hovered_edge.node1.radius, posY, posX+150-hovered_edge.node2.radius, posY, true);
+    hovered_edge.node1.render(posX-150, posY, hovered_edge.node1.radius, true);
+    hovered_edge.node2.render(posX+150, posY, hovered_edge.node2.radius, true);
+    return;
+  }
+  
 }
 
 
@@ -112,27 +171,43 @@ function draw() {
 let dx = 0;
 let dy = 0;
 let dragged_node;
+let pinned_node;
 
 function mousePressed() {
 
   // Add nodes
   if (opt_flags.add_node) {
+
     graph.addNode('id'+graph.n_nodes, 0, mouseX, mouseY);
-  } else if (opt_flags.delete_node) {
+
+  } else if (opt_flags.delete_node) { // Delete Nodes
+
     for (let node of graph.nodeList) {
       if (node.flags.hover) {
         graph.deleteNode(node);
       }
     }
-  } else if (opt_flags.add_edge) {
-  } else if (opt_flags.delete_edge) {
+
+  } else if (opt_flags.add_edge) { // Add Edges
+
+    for (let node of graph.nodeList) {
+      if (node.flags.hover) {
+        node.flags.pinned = true;
+        pinned_node = node;
+        break;
+      }
+    }
+
+  } else if (opt_flags.delete_edge) { // Delete Edge
+
     for (let i = 0; i < graph.edgeList.length; i++) {
       edge = graph.edgeList[i];
       if (edge.flags.hover) {
         graph.deleteEdge(edge);
       }
     }
-  } else {
+
+  } else { // Move nodes
     //If user clicks on a node, with no options activated, we preparate it to get moving
     for (let i = 0; i < graph.nodeList.length; i++) {
       node = graph.nodeList[i];
@@ -143,25 +218,47 @@ function mousePressed() {
       }
     }
     
-    if (!dragged_node) return;
-    dx = mouseX - dragged_node.pos.x;
-    dy = mouseY - dragged_node.pos.y;
+    if (!dragged_node) {
+      return;
+    } else { 
+      dx = mouseX - dragged_node.pos.x;
+      dy = mouseY - dragged_node.pos.y;
+    }
+
+
   }
 }
 
 function mouseDragged() {
-  if (!dragged_node) return;
-  
-  dragged_node.pos.x = mouseX - dx;
-  dragged_node.pos.y = mouseY - dy;
+
+  // We are moving a node around
+  if (dragged_node) {
+    dragged_node.pos.x = clamp(mouseX - dx, dragged_node.radius + 15, LENGTH_CANVAS - dragged_node.radius - 15);
+    dragged_node.pos.y = clamp(mouseY - dy, dragged_node.radius + 15, WIDTH_CANVAS - dragged_node.radius - 15);
+  }
+
+  // We have pinned a node to create an edge
+  // if (pinned_node) {
+  //   stroke(0);
+  //   strokeWeight(3);
+  //   line(pinned_node.pos.x, pinned_node.pos.y, mouseX, mouseY);
+  // }
 }
 
 function mouseReleased() {
-  if (!dragged_node) return;
-  
-  dragged_node.flags.dragging = false;
-  dragged_node = undefined;
+  if (dragged_node) {
+    dragged_node.flags.dragging = false;
+    dragged_node = undefined;
+  }
 
+  if (pinned_node) {
+    if (hovered_node_flag) {
+      graph.addEdge(pinned_node.id, hovered_node.id);
+    }
+
+    pinned_node.flags.pinned = false;
+    pinned_node = undefined;
+  }
 }
 
 let color_selected = "#FF8080"

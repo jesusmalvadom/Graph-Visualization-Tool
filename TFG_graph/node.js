@@ -19,6 +19,7 @@ class Node {
     this.flags = {
       hover : false,
       dragging : false,
+      pinned: false
     };
 
 
@@ -49,31 +50,33 @@ class Node {
   }
 
   // Drawing methods
-  render() {
-    this.render_circle();
-    this.render_text();
+  render(x=this.pos.x, y=this.pos.y, radius=this.radius, info=false) {
+    this.render_circle(x, y, radius, info);
+    this.render_text(x, y);
   }
 
-  render_text() {
+  render_text(x, y) {
     noStroke();
     fill(0);
     textSize(20);
-    text(this.info, this.pos.x - (textWidth(this.info) / 2), this.pos.y + ((textAscent() + textDescent()) / 4));
+    text(this.info, x - (textWidth(this.info) / 2), y + ((textAscent() + textDescent()) / 4));
   }
   
-  render_circle() {
+  render_circle(x, y, radius, info) {
     stroke(0);
     strokeWeight(2);
     fill(255);
-    if (this.flags.hover) {
-      stroke(255, 0, 0);
-      strokeWeight(3);
-    }
-    if (this.flags.dragging) {
-      fill(100, 255, 255);
+    if (!info) { 
+      if (this.flags.hover) {
+        stroke(255, 0, 0);
+        strokeWeight(3);
+      }
+      if (this.flags.dragging) {
+        fill(100, 255, 255);
+      }
     }
     
-    ellipse(this.pos.x, this.pos.y, this.radius*2, this.radius*2);
+    ellipse(x, y, radius*2, radius*2);
   }
 
   isInside(x, y) {
