@@ -1,7 +1,7 @@
 class Edge {
-  constructor(node1Id, node2Id) {
-    this.node1 = graph.findNode(node1Id);
-    this.node2 = graph.findNode(node2Id);
+  constructor(node1, node2) {
+    this.node1 = node1;
+    this.node2 = node2;
     
     this.flags = {
       hover : false,
@@ -18,15 +18,17 @@ class Edge {
     strokeWeight(2);
     if (!info) {
       if (this.flags.hover) {
-        stroke(200, 0, 0);
-        strokeWeight(3);
+        stroke(0, 0, 200);
+        strokeWeight(5);
       }
       if (this.flags.dragging) {
         fill(100, 255, 255);
       }
+      line(node1posX, node1posY, node2posX, node2posY);
+    } else {
+      infoWindow.line(node1posX, node1posY, node2posX, node2posY);
     }
     
-    line(node1posX, node1posY, node2posX, node2posY);
   }
   
   isInside(x, y) {
